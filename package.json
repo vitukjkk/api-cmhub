@@ -1,0 +1,22 @@
+{
+  "name": "cmhub-api",
+  "version": "1.0.0",
+  "main": "dist/server.js",
+  "type": "module",
+  "scripts": {
+    "start": "nodemon dist/server.js",
+    "build": "tsc --watch"
+  },
+  "keywords": [],
+  "author": "Vitor de Oliveira",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "express": "^4.21.2",
+    "typescript": "^5.7.2"
+  },
+  "dependencies": {
+    "nodemon": "^3.1.7"
+  }
+}
