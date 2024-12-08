@@ -10,6 +10,7 @@ datasource db {
 model User {
   id       String   @id @default(uuid())
   name     String
+  role   String   @default("user")
   bio      String?  @default("Usuário sem bio cadastrada.") 
   image   String?
   username String   @unique
@@ -23,10 +24,12 @@ model User {
 model Post {
   id       String   @id @default(uuid())
   title    String
-  content  String?
+  content  String
   authorId String
   author   User     @relation(fields: [authorId], references: [id])
   comments Comments[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
   @@map("post")
 }
 
