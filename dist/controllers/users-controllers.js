@@ -24,14 +24,14 @@ const userSchema = z.object({
         max(30, { message: "ERRO: o username deve ter no máximo 30 caracteres!" })
 });
 export class UsersController {
-    getUsers(req, res) {
+    getUsers(req, res, next) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const users = yield prisma.user.findMany();
                 res.json(users);
             }
             catch (error) {
-                throw new AppError('Erro ao buscar usuários!', 500);
+                next(error);
             }
         });
     }
@@ -65,12 +65,7 @@ export class UsersController {
                 res.status(201).json(newUser);
             }
             catch (error) {
-                if (error instanceof z.ZodError) {
-                    next(new AppError(error.errors[0].message, 400));
-                }
-                else {
-                    next(new AppError('Erro ao criar usuário!', 500));
-                }
+                next(error);
             }
         });
     }
@@ -89,12 +84,7 @@ export class UsersController {
                 res.send(`Usuário com ID ${req.params.id} atualizado!`);
             }
             catch (error) {
-                if (error instanceof z.ZodError) {
-                    next(new AppError(error.errors[0].message, 400));
-                }
-                else {
-                    next(new AppError('Erro ao atualizar usuário!', 500));
-                }
+                next(error);
             }
         });
     }
@@ -108,12 +98,7 @@ export class UsersController {
                 res.send(`Usuário com ID ${req.params.id} deletado!`);
             }
             catch (error) {
-                if (error instanceof z.ZodError) {
-                    next(new AppError(error.errors[0].message, 400));
-                }
-                else {
-                    next(new AppError('Erro ao deletar usuário!', 500));
-                }
+                next(error);
             }
         });
     }

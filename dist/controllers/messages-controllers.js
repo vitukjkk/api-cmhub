@@ -12,36 +12,100 @@ import { AppError } from '../utils/app-error.js';
 import z from 'zod';
 const prisma = new PrismaClient();
 const messageSchema = z.object({
-    message: z.
-        string({ message: "ERRO: a mensagem deve ser texto!" }).
-        nonempty({ message: "ERRO: a mensagem não pode ser vazia!" }).
-        min(3, { message: "ERRO: a mensagem deve ter no mínimo 3 caracteres!" }).
-        max(500, { message: "ERRO: a mensagem deve ter no máximo 500 caracteres!" }),
-    authorId: z.
-        string({ message: "ERRO: o autor deve ser texto!" }).
-        nonempty({ message: "ERRO: o autor não pode ser vazio!" }).
-        min(3, { message: "ERRO: o autor deve ter no mínimo 3 caracteres!" }).
-        max(50, { message: "ERRO: o autor deve ter no máximo 50 caracteres!" }).
-        uuid({ message: "ERRO: o autor deve ser um UUID!" }),
-    destinatarioId: z.
-        string({ message: "ERRO: o destinatário deve ser texto!" }).
-        nonempty({ message: "ERRO: o destinatário não pode ser vazio!" }).
-        min(3, { message: "ERRO: o destinatário deve ter no mínimo 3 caracteres!" }).
-        max(50, { message: "ERRO: o destinatário deve ter no máximo 50 caracteres!" }).
-        uuid({ message: "ERRO: o destinatário deve ser um UUID!" })
+    message: z.string().nonempty({ message: "ERRO: a mensagem não pode ser vazia!" }),
+    authorId: z.string().uuid({ message: "ERRO: o autor deve ser um UUID!" }),
+    destinatarioId: z.string().uuid({ message: "ERRO: o destinatário deve ser um UUID!" })
 });
 export class MessagesController {
-    getMessages(req, res) {
+    getMessages(req, res, next) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const messages = yield prisma.message.findMany();
+                const messages = yield prisma.mensagens.findMany();
                 res.json(messages);
             }
             catch (error) {
-                throw new AppError('Erro ao buscar mensagens!', 500);
+                next(new AppError('Erro ao buscar mensagens!', 500));
             }
         });
     }
-    ;
+    getMessage(req, res, next) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const id = req.params.id;
+                const message = yield prisma.mensagens.findUnique({
+                    where: { id: id }
+                });
+                if (!message) {
+                    throw new AppError('Mensagem não encontrada!', 404);
+                }
+                res.json(message);
+            }
+            catch (error) {
+                next(error);
+            }
+        });
+    }
+    createMessage(req, res, next) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const parsedData = messageSchema.parse(req.body);
+                const newMessage = yield prisma.mensagens.create({
+                    data: {
+                        message: parsedData.message,
+                        authorId: parsedData.authorId,
+                        destinatarioId: parsedData.destinatarioId,
+                        data: new Date()
+                    }
+                });
+                res.status(201).json(newMessage);
+            }
+            catch (error) {
+                if (error instanceof z.ZodError) {
+                    next(new AppError(error.errors[0].message, 400));
+                }
+                else {
+                    next(new AppError('Erro ao criar mensagem!', 500));
+                }
+            }
+        });
+    }
+    updateMessage(req, res, next) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const id = req.params.id;
+                const parsedData = messageSchema.parse(req.body);
+                const updatedMessage = yield prisma.mensagens.update({
+                    where: { id: id },
+                    data: {
+                        message: parsedData.message,
+                        authorId: parsedData.authorId,
+                        destinatarioId: parsedData.destinatarioId
+                    }
+                });
+                res.json(updatedMessage);
+            }
+            catch (error) {
+                if (error instanceof z.ZodError) {
+                    next(new AppError(error.errors[0].message, 400));
+                }
+                else {
+                    next(new AppError('Erro ao editar mensagem!', 500));
+                }
+            }
+        });
+    }
+    deleteMessage(req, res, next) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const id = req.params.id;
+                yield prisma.mensagens.delete({
+                    where: { id: id }
+                });
+                res.status(204).send();
+            }
+            catch (error) {
+                next(new AppError('Erro ao deletar mensagem!', 500));
+            }
+        });
+    }
 }
-;

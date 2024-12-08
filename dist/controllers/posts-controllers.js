@@ -121,12 +121,3 @@ export class PostsController {
         });
     }
 }
-/*
-
-GETALL
-GET
-CREATE
-UPDATE - EDIT (VERIFICAR PERMISSAO DE USUÁRIO)
-DELETE
-
-*/ 

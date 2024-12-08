@@ -21,12 +21,12 @@ const userSchema = z.object({
 });
 
 export class UsersController {
-    async getUsers(req: Request, res: Response) {
+    async getUsers(req: Request, res: Response, next : NextFunction) {
         try {
             const users = await prisma.user.findMany();
             res.json(users);
         } catch (error) {
-            throw new AppError('Erro ao buscar usuários!', 500);
+            next(error);
         }
     }
 
@@ -61,11 +61,7 @@ export class UsersController {
 
             res.status(201).json(newUser);
         } catch (error) {
-            if(error instanceof z.ZodError) {
-                next(new AppError(error.errors[0].message, 400));
-            } else {
-                next(new AppError('Erro ao criar usuário!', 500));
-            }
+            next(error);
         }
     }
 
@@ -85,11 +81,7 @@ export class UsersController {
     
             res.send(`Usuário com ID ${req.params.id} atualizado!`);
         } catch (error) {
-            if(error instanceof z.ZodError) {
-                next(new AppError(error.errors[0].message, 400));
-            } else {
-                next(new AppError('Erro ao atualizar usuário!', 500));
-            }
+            next(error);
         }
     }
 
@@ -102,11 +94,7 @@ export class UsersController {
             res.send(`Usuário com ID ${req.params.id} deletado!`);
 
         } catch (error) {
-            if(error instanceof z.ZodError) {
-                next(new AppError(error.errors[0].message, 400));
-            } else {
-                next(new AppError('Erro ao deletar usuário!', 500));
-            }
+            next(error);
         }
     }
 }
