@@ -101,10 +101,19 @@ export class UsersController {
     }
 
     async deleteUser(req: Request, res: Response) {
-        const id = req.params.id;
-        await prisma.user.delete({
-            where: { id: id }
-        })
-        res.send(`Usuário com ID ${req.params.id} deletado!`);
+        try {
+            const parsedId = userSchema.parse({ id: req.params.id }).id;
+            await prisma.user.delete({
+                where: { id: parsedId }
+            })
+            res.send(`Usuário com ID ${req.params.id} deletado!`);
+
+        } catch (error) {
+            if(error instanceof z.ZodError) {
+                throw new AppError(error.errors[0].message, 400);
+            } else {
+                throw new AppError('Erro ao deletar usuário!', 500);
+            }
+        }
     }
 }

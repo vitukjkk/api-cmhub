@@ -105,11 +105,21 @@ export class UsersController {
     }
     deleteUser(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
-            const id = req.params.id;
-            yield prisma.user.delete({
-                where: { id: id }
-            });
-            res.send(`Usuário com ID ${req.params.id} deletado!`);
+            try {
+                const parsedId = userSchema.parse({ id: req.params.id }).id;
+                yield prisma.user.delete({
+                    where: { id: parsedId }
+                });
+                res.send(`Usuário com ID ${req.params.id} deletado!`);
+            }
+            catch (error) {
+                if (error instanceof z.ZodError) {
+                    throw new AppError(error.errors[0].message, 400);
+                }
+                else {
+                    throw new AppError('Erro ao deletar usuário!', 500);
+                }
+            }
         });
     }
 }
