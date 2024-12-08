@@ -8,47 +8,99 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 import { PrismaClient } from '@prisma/client';
+import { AppError } from '../utils/app-error.js';
+import z from 'zod';
 const prisma = new PrismaClient();
+const userSchema = z.object({
+    id: z.
+        string({ message: "ERRO: o ID deve ser texto!" }).
+        uuid({ message: "ERRO: o ID deve ser um UUID!" }).
+        nonempty({ message: "ERRO: o ID não pode ser vazio!" }).
+        length(36, { message: "ERRO: o ID deve ter 36 caracteres!" }),
+    name: z.
+        string({ message: "ERRO: o nome deve ser texto!" }).
+        nonempty({ message: "ERRO: o nome não pode ser vazio!" }).
+        min(3, { message: "ERRO: o nome deve ter no mínimo 3 caracteres!" }).
+        max(50, { message: "ERRO: o nome deve ter no máximo 50 caracteres!" }),
+    username: z.
+        string({ message: "ERRO: o username deve ser texto!" }).
+        nonempty({ message: "ERRO: o username não pode ser vazio!" }).
+        min(3, { message: "ERRO: o username deve ter no mínimo 3 caracteres!" }).
+        max(30, { message: "ERRO: o username deve ter no máximo 30 caracteres!" })
+});
 export class UsersController {
     getUsers(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
-            const users = yield prisma.user.findMany();
-            res.json(users);
+            try {
+                const users = yield prisma.user.findMany();
+                res.json(users);
+            }
+            catch (error) {
+                throw new AppError('Erro ao buscar usuários!', 500);
+            }
         });
     }
-    getUser(req, res) {
+    getUser(req, res, next) {
         return __awaiter(this, void 0, void 0, function* () {
-            const id = req.params.id;
-            const user = yield prisma.user.findUnique({
-                where: { id: id }
-            });
-            res.json(user);
+            try {
+                const id = req.params.id;
+                const user = yield prisma.user.findUnique({
+                    where: { id: id }
+                });
+                if (!user) {
+                    throw new AppError('Usuário não encontrado!', 404);
+                }
+                res.json(user);
+            }
+            catch (error) {
+                next(error);
+            }
         });
     }
     createUser(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
-            const { name, username } = req.body;
-            yield prisma.user.create({
-                data: {
-                    name: name,
-                    username: username
+            try {
+                const parsedData = userSchema.parse(req.body);
+                const newUser = yield prisma.user.create({
+                    data: {
+                        name: parsedData.name,
+                        username: parsedData.username
+                    }
+                });
+                res.json(newUser).status(201);
+            }
+            catch (error) {
+                if (error instanceof z.ZodError) {
+                    throw new AppError(error.errors[0].message, 400);
                 }
-            });
-            res.send('Usuário criado!');
+                else {
+                    throw new AppError('Erro ao criar usuário!', 500);
+                }
+            }
         });
     }
     updateUser(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
-            const id = req.params.id;
-            const { name, username } = req.body;
-            yield prisma.user.update({
-                where: { id: id },
-                data: {
-                    name: name,
-                    username: username
+            try {
+                const parsedId = userSchema.parse({ id: req.params.id }).id;
+                const parsedData = userSchema.parse(req.body);
+                yield prisma.user.update({
+                    where: { id: parsedId },
+                    data: {
+                        name: parsedData.name,
+                        username: parsedData.username
+                    }
+                });
+                res.send(`Usuário com ID ${req.params.id} atualizado!`);
+            }
+            catch (error) {
+                if (error instanceof z.ZodError) {
+                    throw new AppError(error.errors[0].message, 400);
                 }
-            });
-            res.send(`Usuário com ID ${req.params.id} atualizado!`);
+                else {
+                    throw new AppError('Erro ao atualizar usuário!', 500);
+                }
+            }
         });
     }
     deleteUser(req, res) {

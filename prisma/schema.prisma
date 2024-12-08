@@ -9,8 +9,8 @@ datasource db {
 
 model User {
   id       String   @id @default(uuid())
-  name     String?
-  bio      String? 
+  name     String
+  bio      String?  @default("Usuário sem bio cadastrada.") 
   image   String?
   username String   @unique
   posts    Post[] 
