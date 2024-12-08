@@ -6,12 +6,6 @@ import z from 'zod';
 const prisma = new PrismaClient();
 
 const userSchema = z.object({
-    id:
-        z.
-            string({message: "ERRO: o ID deve ser texto!"}).
-            uuid({message: "ERRO: o ID deve ser um UUID!"}).
-            nonempty({message: "ERRO: o ID não pode ser vazio!"}).
-            length(36, {message: "ERRO: o ID deve ter 36 caracteres!"}),
     name:
         z.
             string({message: "ERRO: o nome deve ser texto!"}).
@@ -78,12 +72,11 @@ export class UsersController {
     async updateUser(req: Request, res: Response, next : NextFunction) {
 
         try {
-            
-            const parsedId = userSchema.parse({ id: req.params.id }).id;
+            const id = req.params.id;
             const parsedData = userSchema.parse(req.body);
             
             await prisma.user.update({
-                where: { id: parsedId },
+                where: { id: id },
                 data: {
                     name: parsedData.name,
                     username: parsedData.username
@@ -102,9 +95,9 @@ export class UsersController {
 
     async deleteUser(req: Request, res: Response, next : NextFunction) {
         try {
-            const parsedId = userSchema.parse({ id: req.params.id }).id;
+            const id = req.params.id;
             await prisma.user.delete({
-                where: { id: parsedId }
+                where: { id: id }
             })
             res.send(`Usuário com ID ${req.params.id} deletado!`);
 

@@ -12,11 +12,6 @@ import { AppError } from '../utils/app-error.js';
 import z from 'zod';
 const prisma = new PrismaClient();
 const userSchema = z.object({
-    id: z.
-        string({ message: "ERRO: o ID deve ser texto!" }).
-        uuid({ message: "ERRO: o ID deve ser um UUID!" }).
-        nonempty({ message: "ERRO: o ID não pode ser vazio!" }).
-        length(36, { message: "ERRO: o ID deve ter 36 caracteres!" }),
     name: z.
         string({ message: "ERRO: o nome deve ser texto!" }).
         nonempty({ message: "ERRO: o nome não pode ser vazio!" }).
@@ -82,10 +77,10 @@ export class UsersController {
     updateUser(req, res, next) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const parsedId = userSchema.parse({ id: req.params.id }).id;
+                const id = req.params.id;
                 const parsedData = userSchema.parse(req.body);
                 yield prisma.user.update({
-                    where: { id: parsedId },
+                    where: { id: id },
                     data: {
                         name: parsedData.name,
                         username: parsedData.username
@@ -106,9 +101,9 @@ export class UsersController {
     deleteUser(req, res, next) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const parsedId = userSchema.parse({ id: req.params.id }).id;
+                const id = req.params.id;
                 yield prisma.user.delete({
-                    where: { id: parsedId }
+                    where: { id: id }
                 });
                 res.send(`Usuário com ID ${req.params.id} deletado!`);
             }
