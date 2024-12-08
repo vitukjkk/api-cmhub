@@ -57,7 +57,7 @@ export class UsersController {
             }
         });
     }
-    createUser(req, res) {
+    createUser(req, res, next) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const parsedData = userSchema.parse(req.body);
@@ -67,19 +67,19 @@ export class UsersController {
                         username: parsedData.username
                     }
                 });
-                res.json(newUser).status(201);
+                res.status(201).json(newUser);
             }
             catch (error) {
                 if (error instanceof z.ZodError) {
-                    throw new AppError(error.errors[0].message, 400);
+                    next(new AppError(error.errors[0].message, 400));
                 }
                 else {
-                    throw new AppError('Erro ao criar usuário!', 500);
+                    next(new AppError('Erro ao criar usuário!', 500));
                 }
             }
         });
     }
-    updateUser(req, res) {
+    updateUser(req, res, next) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const parsedId = userSchema.parse({ id: req.params.id }).id;
@@ -95,15 +95,15 @@ export class UsersController {
             }
             catch (error) {
                 if (error instanceof z.ZodError) {
-                    throw new AppError(error.errors[0].message, 400);
+                    next(new AppError(error.errors[0].message, 400));
                 }
                 else {
-                    throw new AppError('Erro ao atualizar usuário!', 500);
+                    next(new AppError('Erro ao atualizar usuário!', 500));
                 }
             }
         });
     }
-    deleteUser(req, res) {
+    deleteUser(req, res, next) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const parsedId = userSchema.parse({ id: req.params.id }).id;
@@ -114,10 +114,10 @@ export class UsersController {
             }
             catch (error) {
                 if (error instanceof z.ZodError) {
-                    throw new AppError(error.errors[0].message, 400);
+                    next(new AppError(error.errors[0].message, 400));
                 }
                 else {
-                    throw new AppError('Erro ao deletar usuário!', 500);
+                    next(new AppError('Erro ao deletar usuário!', 500));
                 }
             }
         });

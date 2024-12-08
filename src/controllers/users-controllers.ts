@@ -53,7 +53,7 @@ export class UsersController {
         }
     }
 
-    async createUser(req: Request, res: Response) {
+    async createUser(req: Request, res: Response, next : NextFunction) {
         try {
 
             const parsedData = userSchema.parse(req.body);
@@ -65,17 +65,17 @@ export class UsersController {
                 }
             });
 
-            res.json(newUser).status(201);
+            res.status(201).json(newUser);
         } catch (error) {
             if(error instanceof z.ZodError) {
-                throw new AppError(error.errors[0].message, 400);
+                next(new AppError(error.errors[0].message, 400));
             } else {
-                throw new AppError('Erro ao criar usuário!', 500);
+                next(new AppError('Erro ao criar usuário!', 500));
             }
         }
     }
 
-    async updateUser(req: Request, res: Response) {
+    async updateUser(req: Request, res: Response, next : NextFunction) {
 
         try {
             
@@ -93,14 +93,14 @@ export class UsersController {
             res.send(`Usuário com ID ${req.params.id} atualizado!`);
         } catch (error) {
             if(error instanceof z.ZodError) {
-                throw new AppError(error.errors[0].message, 400);
+                next(new AppError(error.errors[0].message, 400));
             } else {
-                throw new AppError('Erro ao atualizar usuário!', 500);
+                next(new AppError('Erro ao atualizar usuário!', 500));
             }
         }
     }
 
-    async deleteUser(req: Request, res: Response) {
+    async deleteUser(req: Request, res: Response, next : NextFunction) {
         try {
             const parsedId = userSchema.parse({ id: req.params.id }).id;
             await prisma.user.delete({
@@ -110,9 +110,9 @@ export class UsersController {
 
         } catch (error) {
             if(error instanceof z.ZodError) {
-                throw new AppError(error.errors[0].message, 400);
+                next(new AppError(error.errors[0].message, 400));
             } else {
-                throw new AppError('Erro ao deletar usuário!', 500);
+                next(new AppError('Erro ao deletar usuário!', 500));
             }
         }
     }
