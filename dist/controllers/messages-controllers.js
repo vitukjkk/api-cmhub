@@ -41,7 +41,7 @@ export class MessagesController {
                 res.json(message);
             }
             catch (error) {
-                next(error);
+                next(new AppError('Erro ao buscar mensagens!', 500));
             }
         });
     }
