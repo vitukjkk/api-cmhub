@@ -12,12 +12,20 @@ app.use(cors({
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type']
 }));
+
+app.use((req, res, next) => {
+    res.setHeader('Access-Control-Allow-Origin', 'http://localhost:3000');
+    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    next();
+});
+
 app.use(routes);
 
 const PORT = process.env.PORT || 3000;
 
 app.get('/', (req: Request, res: Response) => {
-    res.send('Hello World!');
+    res.json({ message: 'Hello World!' });
 });
 
 app.listen(PORT, () => {
