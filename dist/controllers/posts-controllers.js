@@ -10,6 +10,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 import { PrismaClient } from '@prisma/client';
 import { AppError } from '../utils/app-error.js';
 import z from 'zod';
+import { authenticateToken } from '../middlewares/my-middleware.js';
 const prisma = new PrismaClient();
 const postSchema = z.object({
     title: z.
@@ -76,6 +77,7 @@ export class PostsController {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const parsedData = postSchema.parse(req.body);
+                authenticateToken(req, res, next);
                 const newPost = yield prisma.post.create({
                     data: {
                         title: parsedData.title,

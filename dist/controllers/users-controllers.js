@@ -8,7 +8,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 import { PrismaClient } from '@prisma/client';
+import { AppError } from '../utils/app-error.js';
 import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
 import z from 'zod';
 const prisma = new PrismaClient();
 const userSchema = z.object({
@@ -43,12 +45,21 @@ export class UsersController {
     getUser(req, res, next) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const { username, password } = req.body;
-                const existingUser = yield prisma.user.findUnique({ where: { username: username } });
-                if (!existingUser)
-                    return res.json({ message: "ERRO: usuário não encontrado! Registre-se para acessar." });
-                if (!(yield bcrypt.compare(password, existingUser.password)))
-                    return res.json({ message: "ERRO: senha incorreta!" });
+                const username = req.params.username;
+                const password = req.body.password;
+                const message = "Usuário não encontrado!";
+                const existingUser = yield prisma.user.findUnique({ where: { username } });
+                if (existingUser === null) {
+                    res.json({ message });
+                    throw new AppError("Usuário não encontrado!", 404);
+                }
+                const isPasswordValid = yield bcrypt.compare(password, existingUser.password);
+                if (!isPasswordValid) {
+                    res.json({ message: "Senha inválida!" });
+                    throw new AppError("Senha inválida!", 401);
+                }
+                const token = jwt.sign({ username }, process.env.JWT_SECRET, { expiresIn: '1h' });
+                res.json({ message: "Usuário logado!", token });
             }
             catch (error) {
                 next(error);
@@ -60,8 +71,9 @@ export class UsersController {
             try {
                 const parsedData = userSchema.parse(req.body);
                 const hashedPassword = yield bcrypt.hash(parsedData.password, 10);
-                if (yield prisma.user.findUnique({ where: { username: parsedData.username } }))
-                    return res.json({ message: "ERRO: usuário já existe!" });
+                const existingUser = yield prisma.user.findUnique({ where: { username: parsedData.username } });
+                if (existingUser)
+                    res.json({ message: "ERRO: usuário já existe!" });
                 yield prisma.user.create({
                     data: {
                         name: parsedData.name,

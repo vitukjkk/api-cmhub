@@ -39,18 +39,29 @@ export class UsersController {
         }
     }
 
-    async getUser(req: Request, res: Response, next : NextFunction) {
+    async getUser(req: Request, res: Response, next: NextFunction) {
         try {
-            const username = req.params.username;
-            const password = req.body.password;
+            const username : string = req.params.username;
+            const password : string = req.body.password;
+            const message : string = "Usuário não encontrado!";
 
             const existingUser = await prisma.user.findUnique({ where: { username } });
-            if(!existingUser) return res.json({message: "ERRO: usuário não encontrado! Registre-se para acessar."});
-
+            
+            if(existingUser === null) {
+                res.json({message});
+                throw new AppError("Usuário não encontrado!", 404);
+            }
+            
             const isPasswordValid = await bcrypt.compare(password, existingUser.password);
-            if(!isPasswordValid) return res.json({message: "ERRO: senha incorreta!"});
 
+            if (!isPasswordValid) { 
+                res.json({message: "Senha inválida!"});
+                throw new AppError("Senha inválida!", 401); 
+            }
 
+            const token = jwt.sign({ username }, process.env.JWT_SECRET as string, { expiresIn: '1h' });
+
+            res.json({message: "Usuário logado!", token});
         } catch (error) {
             next(error);
         }
@@ -62,7 +73,7 @@ export class UsersController {
             const hashedPassword = await bcrypt.hash(parsedData.password, 10);
 
             const existingUser = await prisma.user.findUnique({ where: { username: parsedData.username } });
-            if(existingUser) return res.json({message: "ERRO: usuário já existe!"});
+            if(existingUser) res.json({message: "ERRO: usuário já existe!"});
 
             await prisma.user.create({
                 data: {

@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { AppError } from '../utils/app-error.js';
 import { ZodError } from 'zod';
+import jwt from 'jsonwebtoken';
 
 export function errorHandler(err: Error, req: Request, res: Response, _next : NextFunction) {
     if (err instanceof AppError) {
@@ -10,4 +11,15 @@ export function errorHandler(err: Error, req: Request, res: Response, _next : Ne
     } else if (err instanceof Error) {
         return res.status(500).json({ message: 'Erro interno no servidor!' });
     }
+}
+
+export function authenticateToken(req : Request, res : Response, next : NextFunction) {
+    const token = req.headers['authorization']?.split(' ')[1];
+    if(!token) return res.status(401).json({ message: 'Token não fornecido!' });
+    
+    jwt.verify(token, process.env.JWT_SECRET as string, (err, user) => {
+        if(err) return res.status(403).json({ message: 'Token inválido!' });
+        console.log('token válido!');
+        next();
+    });
 }

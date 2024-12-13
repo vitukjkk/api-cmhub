@@ -2,6 +2,7 @@ import express, { Request, Response, NextFunction } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { AppError } from '../utils/app-error.js';
 import z from 'zod';
+import { authenticateToken } from '../middlewares/my-middleware.js';
 
 const prisma = new PrismaClient();
 
@@ -74,6 +75,8 @@ export class PostsController {
     async createPost(req : Request, res : Response, next : NextFunction) {
         try {
             const parsedData = postSchema.parse(req.body);
+
+            authenticateToken(req, res, next);
 
             const newPost = await prisma.post.create({
                 data: {

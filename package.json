@@ -4,9 +4,9 @@
   "main": "dist/server.js",
   "type": "module",
   "scripts": {
-    "start": "nodemon dist/server.js",
+    "start": "node dist/server.js",
     "build": "tsc --watch",
-    "dev": "tsc && node dist/server.js"
+    "dev": "tsc && nodemon dist/server.js"
   },
   "keywords": [],
   "author": "Vitor de Oliveira",
