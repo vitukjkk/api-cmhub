@@ -27,7 +27,21 @@ const postSchema = z.object({
         nonempty({ message: "ERRO: o autor não pode ser vazio!" }).
         min(3, { message: "ERRO: o autor deve ter no mínimo 3 caracteres!" }).
         max(50, { message: "ERRO: o autor deve ter no máximo 50 caracteres!" }).
-        uuid({ message: "ERRO: o autor deve ser um UUID!" })
+        uuid({ message: "ERRO: o autor deve ser um UUID!" }),
+    comments: z.
+        array(z.object({
+        content: z.
+            string({ message: "ERRO: o conteúdo do comentário deve ser texto!" }).
+            nonempty({ message: "ERRO: o conteúdo do comentário não pode ser vazio!" }).
+            min(3, { message: "ERRO: o conteúdo do comentário deve ter no mínimo 3 caracteres!" }).
+            max(500, { message: "ERRO: o conteúdo do comentário deve ter no máximo 500 caracteres!" }),
+        authorId: z.
+            string({ message: "ERRO: o autor do comentário deve ser texto!" }).
+            nonempty({ message: "ERRO: o autor do comentário não pode ser vazio!" }).
+            min(3, { message: "ERRO: o autor do comentário deve ter no mínimo 3 caracteres!" }).
+            max(50, { message: "ERRO: o autor do comentário deve ter no máximo 50 caracteres!" }).
+            uuid({ message: "ERRO: o autor do comentário deve ser um UUID!" }),
+    }), { message: "ERRO: os comentários devem ser um array de objetos!" }),
 });
 export class PostsController {
     getPosts(req, res) {

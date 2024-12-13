@@ -8,7 +8,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 import { PrismaClient } from '@prisma/client';
-import { AppError } from '../utils/app-error.js';
+import bcrypt from 'bcrypt';
 import z from 'zod';
 const prisma = new PrismaClient();
 const userSchema = z.object({
@@ -21,7 +21,12 @@ const userSchema = z.object({
         string({ message: "ERRO: o username deve ser texto!" }).
         nonempty({ message: "ERRO: o username não pode ser vazio!" }).
         min(3, { message: "ERRO: o username deve ter no mínimo 3 caracteres!" }).
-        max(30, { message: "ERRO: o username deve ter no máximo 30 caracteres!" })
+        max(30, { message: "ERRO: o username deve ter no máximo 30 caracteres!" }),
+    password: z.
+        string({ message: "ERRO: a senha deve ser texto!" }).
+        nonempty({ message: "ERRO: a senha não pode ser vazia!" }).
+        min(6, { message: "ERRO: a senha deve ter no mínimo 6 caracteres!" }).
+        max(30, { message: "ERRO: a senha deve ter no máximo 30 caracteres!" })
 });
 export class UsersController {
     getUsers(req, res, next) {
@@ -38,14 +43,12 @@ export class UsersController {
     getUser(req, res, next) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const id = req.params.id;
-                const user = yield prisma.user.findUnique({
-                    where: { id: id }
-                });
-                if (!user) {
-                    throw new AppError('Usuário não encontrado!', 404);
-                }
-                res.json(user);
+                const { username, password } = req.body;
+                const existingUser = yield prisma.user.findUnique({ where: { username: username } });
+                if (!existingUser)
+                    return res.json({ message: "ERRO: usuário não encontrado! Registre-se para acessar." });
+                if (!(yield bcrypt.compare(password, existingUser.password)))
+                    return res.json({ message: "ERRO: senha incorreta!" });
             }
             catch (error) {
                 next(error);
@@ -56,13 +59,17 @@ export class UsersController {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const parsedData = userSchema.parse(req.body);
-                const newUser = yield prisma.user.create({
+                const hashedPassword = yield bcrypt.hash(parsedData.password, 10);
+                if (yield prisma.user.findUnique({ where: { username: parsedData.username } }))
+                    return res.json({ message: "ERRO: usuário já existe!" });
+                yield prisma.user.create({
                     data: {
                         name: parsedData.name,
-                        username: parsedData.username
+                        username: parsedData.username,
+                        password: hashedPassword
                     }
                 });
-                res.status(201).json(newUser);
+                res.json({ message: "Usuário criado com sucesso!" });
             }
             catch (error) {
                 next(error);

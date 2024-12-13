@@ -6,7 +6,7 @@ const usersController = new UsersController();
 
 usersRoutes.get('/', usersController.getUsers);
 
-usersRoutes.get('/:id', usersController.getUser);
+usersRoutes.get('/:username', usersController.getUser);
 
 usersRoutes.post('/', usersController.createUser);
 
