@@ -9,8 +9,8 @@ datasource db {
 
 model User {
   id       String   @id @default(uuid())
-  name     String
-  username String   @unique
+  name     String  @default("Usuário sem nome cadastrado.")
+  username String   @unique @default("user")
   password String @default("sem_senha")
   role   String   @default("user")
   bio      String?  @default("Usuário sem bio cadastrada.") 
@@ -19,14 +19,17 @@ model User {
   comments Comments[]
   messagesSent Mensagens[] @relation("sentId")
   messagesReceived Mensagens[] @relation("destinatarioId")
+  userNamePost Post[] @relation("userNamePost")
   @@map("user")
 }
 
 model Post {
   id       String   @id @default(uuid())
-  title    String
-  content  String
-  authorId String
+  username String  @default("user")
+  userName User   @relation("userNamePost", fields: [username], references: [username])
+  title    String @default("Sem título.")
+  content  String @default("Sem conteúdo.")
+  authorId String @default("user")
   author   User     @relation(fields: [authorId], references: [id])
   comments Comments[]
   createdAt DateTime @default(now())

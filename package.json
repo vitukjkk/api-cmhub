@@ -6,7 +6,8 @@
   "scripts": {
     "start": "node dist/server.js",
     "build": "tsc --watch",
-    "dev": "tsc && nodemon dist/server.js"
+    "dev": "nodemon dist/server.js && tsc --watch",
+    "server": "nodemon dist/server.js"
   },
   "keywords": [],
   "author": "Vitor de Oliveira",

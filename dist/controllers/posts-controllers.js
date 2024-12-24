@@ -10,7 +10,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 import { PrismaClient } from '@prisma/client';
 import { AppError } from '../utils/app-error.js';
 import z from 'zod';
-import { authenticateToken } from '../middlewares/my-middleware.js';
 const prisma = new PrismaClient();
 const postSchema = z.object({
     title: z.
@@ -23,26 +22,11 @@ const postSchema = z.object({
         nonempty({ message: "ERRO: o conteúdo não pode ser vazio!" }).
         min(3, { message: "ERRO: o conteúdo deve ter no mínimo 3 caracteres!" }).
         max(500, { message: "ERRO: o conteúdo deve ter no máximo 500 caracteres!" }),
-    authorId: z.
+    authorUserName: z.
         string({ message: "ERRO: o autor deve ser texto!" }).
         nonempty({ message: "ERRO: o autor não pode ser vazio!" }).
         min(3, { message: "ERRO: o autor deve ter no mínimo 3 caracteres!" }).
-        max(50, { message: "ERRO: o autor deve ter no máximo 50 caracteres!" }).
-        uuid({ message: "ERRO: o autor deve ser um UUID!" }),
-    comments: z.
-        array(z.object({
-        content: z.
-            string({ message: "ERRO: o conteúdo do comentário deve ser texto!" }).
-            nonempty({ message: "ERRO: o conteúdo do comentário não pode ser vazio!" }).
-            min(3, { message: "ERRO: o conteúdo do comentário deve ter no mínimo 3 caracteres!" }).
-            max(500, { message: "ERRO: o conteúdo do comentário deve ter no máximo 500 caracteres!" }),
-        authorId: z.
-            string({ message: "ERRO: o autor do comentário deve ser texto!" }).
-            nonempty({ message: "ERRO: o autor do comentário não pode ser vazio!" }).
-            min(3, { message: "ERRO: o autor do comentário deve ter no mínimo 3 caracteres!" }).
-            max(50, { message: "ERRO: o autor do comentário deve ter no máximo 50 caracteres!" }).
-            uuid({ message: "ERRO: o autor do comentário deve ser um UUID!" }),
-    }), { message: "ERRO: os comentários devem ser um array de objetos!" }),
+        max(30, { message: "ERRO: o autor deve ter no máximo 50 caracteres!" }),
 });
 export class PostsController {
     getPosts(req, res) {
@@ -59,13 +43,10 @@ export class PostsController {
     getPost(req, res, next) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                const id = req.params.id;
-                const post = yield prisma.post.findUnique({
-                    where: { id: id }
+                const username = req.params.username;
+                const post = yield prisma.post.findMany({
+                    where: { author: { username: username } }
                 });
-                if (!post) {
-                    throw new AppError('Post não encontrado!', 404);
-                }
                 res.json(post);
             }
             catch (error) {
@@ -77,15 +58,16 @@ export class PostsController {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const parsedData = postSchema.parse(req.body);
-                authenticateToken(req, res, next);
+                console.log(parsedData);
                 const newPost = yield prisma.post.create({
                     data: {
                         title: parsedData.title,
                         content: parsedData.content,
-                        authorId: parsedData.authorId,
+                        username: parsedData.authorUserName,
+                        authorId: 'ola mundo'
                     }
                 });
-                res.status(201).json(newPost);
+                res.json(newPost);
             }
             catch (error) {
                 if (error instanceof z.ZodError) {
@@ -107,7 +89,6 @@ export class PostsController {
                     data: {
                         title: parsedData.title,
                         content: parsedData.content,
-                        authorId: parsedData.authorId,
                     }
                 });
                 res.json(updatedPost);
