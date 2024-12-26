@@ -5,6 +5,7 @@ import { AppError } from '../utils/app-error.js';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import z from 'zod';
+import { authenticateToken } from '../middlewares/my-middleware.js';
 
 const prisma = new PrismaClient();
 
@@ -38,35 +39,7 @@ export class UsersController {
             next(error);
         }
     }
-
-    async getUser(req: Request, res: Response, next: NextFunction) {
-        try {
-            const username : string = req.params.username;
-            const password : string = req.body.password;
-            const message : string = "Usuário não encontrado!";
-
-            const existingUser = await prisma.user.findUnique({ where: { username } });
-            
-            if(existingUser === null) {
-                res.json({message});
-                throw new AppError("Usuário não encontrado!", 404);
-            }
-            
-            const isPasswordValid = await bcrypt.compare(password, existingUser.password);
-
-            if (!isPasswordValid) { 
-                res.json({message: "Senha inválida!"});
-                throw new AppError("Senha inválida!", 401); 
-            }
-
-            const token = jwt.sign({ username }, process.env.JWT_SECRET as string, { expiresIn: '1h' });
-
-            res.json({message: "Usuário logado!", token});
-        } catch (error) {
-            next(error);
-        }
-    }
-
+    
     async createUser(req: Request, res: Response, next : NextFunction) {
         try {
             const parsedData = userSchema.parse(req.body);

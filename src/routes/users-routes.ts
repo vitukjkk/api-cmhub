@@ -6,8 +6,6 @@ const usersController = new UsersController();
 
 usersRoutes.get('/', usersController.getUsers);
 
-usersRoutes.get('/:username', usersController.getUser);
-
 usersRoutes.post('/', usersController.createUser);
 
 usersRoutes.put('/:id', usersController.updateUser);
