@@ -8,6 +8,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 import { PrismaClient } from '@prisma/client';
+import { AppError } from '../utils/app-error.js';
 import bcrypt from 'bcrypt';
 import z from 'zod';
 const prisma = new PrismaClient();
@@ -28,10 +29,26 @@ const userSchema = z.object({
         min(6, { message: "ERRO: a senha deve ter no mínimo 6 caracteres!" }).
         max(30, { message: "ERRO: a senha deve ter no máximo 30 caracteres!" })
 });
+function verifyUserPermission(req) {
+    return __awaiter(this, void 0, void 0, function* () {
+        // VERIFICAR SE O USUÁRIO TEM PERMISSÃO
+        const user = req.body.user;
+        const userHasPermission = yield prisma.user.findUnique({
+            where: {
+                id: user.id
+            }
+        });
+        if ((userHasPermission === null || userHasPermission === void 0 ? void 0 : userHasPermission.role) !== 'admin') {
+            throw new AppError("ERRO: usuário não tem permissão!", 403);
+        }
+    });
+}
 export class UsersController {
     getUsers(req, res, next) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
+                // VERIFICA SE O USUÁRIO TEM PERMISSÃO
+                yield verifyUserPermission(req);
                 const users = yield prisma.user.findMany();
                 res.json(users);
             }
@@ -43,6 +60,8 @@ export class UsersController {
     createUser(req, res, next) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
+                // VERIFICA SE O USUÁRIO TEM PERMISSÃO
+                yield verifyUserPermission(req);
                 const parsedData = userSchema.parse(req.body);
                 const hashedPassword = yield bcrypt.hash(parsedData.password, 10);
                 const existingUser = yield prisma.user.findUnique({ where: { username: parsedData.username } });
@@ -65,6 +84,8 @@ export class UsersController {
     updateUser(req, res, next) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
+                // VERIFICA SE O USUÁRIO TEM PERMISSÃO
+                yield verifyUserPermission(req);
                 const id = req.params.id;
                 const parsedData = userSchema.parse(req.body);
                 yield prisma.user.update({
@@ -84,6 +105,8 @@ export class UsersController {
     deleteUser(req, res, next) {
         return __awaiter(this, void 0, void 0, function* () {
             try {
+                // VERIFICA SE O USUÁRIO TEM PERMISSÃO
+                yield verifyUserPermission(req);
                 const id = req.params.id;
                 yield prisma.user.delete({
                     where: { id: id }

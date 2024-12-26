@@ -3,9 +3,7 @@ import { PrismaClient } from '@prisma/client';
 import { AppError } from '../utils/app-error.js';
 
 import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
 import z from 'zod';
-import { authenticateToken } from '../middlewares/my-middleware.js';
 
 const prisma = new PrismaClient();
 
@@ -30,9 +28,29 @@ const userSchema = z.object({
             max(30, {message: "ERRO: a senha deve ter no máximo 30 caracteres!"})
 });
 
+async function verifyUserPermission(req : Request) {   
+    // VERIFICAR SE O USUÁRIO TEM PERMISSÃO
+    const user = req.body.user;
+
+    const userHasPermission = await prisma.user.findUnique({
+        where: {
+            id: user.id
+        }
+    });
+
+    if(userHasPermission?.role !== 'admin') {
+        throw new AppError("ERRO: usuário não tem permissão!", 403);
+    }
+}
+
 export class UsersController {
     async getUsers(req: Request, res: Response, next : NextFunction) {
         try {
+
+            // VERIFICA SE O USUÁRIO TEM PERMISSÃO
+
+            await verifyUserPermission(req);
+
             const users = await prisma.user.findMany();
             res.json(users);
         } catch (error) {
@@ -42,6 +60,11 @@ export class UsersController {
     
     async createUser(req: Request, res: Response, next : NextFunction) {
         try {
+
+            // VERIFICA SE O USUÁRIO TEM PERMISSÃO
+
+            await verifyUserPermission(req);
+
             const parsedData = userSchema.parse(req.body);
             const hashedPassword = await bcrypt.hash(parsedData.password, 10);
 
@@ -64,8 +87,12 @@ export class UsersController {
     }
 
     async updateUser(req: Request, res: Response, next : NextFunction) {
-
         try {
+
+            // VERIFICA SE O USUÁRIO TEM PERMISSÃO
+
+            await verifyUserPermission(req);
+
             const id = req.params.id;
             const parsedData = userSchema.parse(req.body);
             
@@ -85,6 +112,11 @@ export class UsersController {
 
     async deleteUser(req: Request, res: Response, next : NextFunction) {
         try {
+
+            // VERIFICA SE O USUÁRIO TEM PERMISSÃO
+
+            await verifyUserPermission(req);
+
             const id = req.params.id;
             await prisma.user.delete({
                 where: { id: id }

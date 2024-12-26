@@ -22,7 +22,7 @@ export function authenticateToken(req, res, next) {
     jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
         if (err)
             return res.status(403).json({ message: 'Token inválido!' });
-        console.log('token válido!');
+        req.body.user = user;
         next();
     });
 }
