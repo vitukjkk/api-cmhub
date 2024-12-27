@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { PrismaClient } from '@prisma/client';
-import { AppError } from '../utils/app-error.js';
+import { verifyUserPermission } from '../utils/functions.js';
 
 import bcrypt from 'bcrypt';
 import z from 'zod';
@@ -27,21 +27,6 @@ const userSchema = z.object({
             min(6, {message: "ERRO: a senha deve ter no mínimo 6 caracteres!"}).
             max(30, {message: "ERRO: a senha deve ter no máximo 30 caracteres!"})
 });
-
-async function verifyUserPermission(req : Request) {   
-    // VERIFICAR SE O USUÁRIO TEM PERMISSÃO
-    const user = req.body.user;
-
-    const userHasPermission = await prisma.user.findUnique({
-        where: {
-            id: user.id
-        }
-    });
-
-    if(userHasPermission?.role !== 'admin') {
-        throw new AppError("ERRO: usuário não tem permissão!", 403);
-    }
-}
 
 export class UsersController {
     async getUsers(req: Request, res: Response, next : NextFunction) {
